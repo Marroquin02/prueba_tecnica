@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { StudentDetail, Subject } from "~/types/students";
+import type { StudentDetail } from "~/types/students";
 
 const route = useRoute();
 const carnet = route.params.carnet as string;
@@ -12,11 +12,8 @@ const error = ref<string | null>(null);
 const isExporting = ref(false);
 const isSendingEmail = ref(false);
 
-
-const sortColumn = ref<string>("cycle");
-const sortDirection = ref<"asc" | "desc">("desc");
-
-const { exportToPDF, sendByEmail } = useStudents();
+const { sendByEmail } = useStudents();
+const { generateStudentPDF, isGenerating: isPDFGenerating } = usePDF();
 
 onMounted(async () => {
   await fetchStudentDetail();
@@ -47,81 +44,14 @@ const fetchStudentDetail = async () => {
   }
 };
 
-
-const allSubjects = computed(() => {
-  if (!student.value?.student.cycles) return [];
-
-  const subjects: Array<Subject & { cycleName: string; cycleId: string }> = [];
-  student.value.student.cycles.forEach(cycle => {
-    cycle.subjects.forEach(subject => {
-      subjects.push({
-        ...subject,
-        cycleName: cycle.name,
-        cycleId: cycle.id,
-      });
-    });
-  });
-
-  return subjects;
-});
-
-
-const sortedSubjects = computed(() => {
-  const subjects = [...allSubjects.value];
-
-  subjects.sort((a, b) => {
-    let comparison = 0;
-
-    switch (sortColumn.value) {
-      case "id":
-        comparison = a.id.localeCompare(b.id);
-        break;
-      case "name":
-        comparison = a.name.localeCompare(b.name);
-        break;
-      case "uv":
-        comparison = a.uv - b.uv;
-        break;
-      case "grade":
-        comparison = a.grade - b.grade;
-        break;
-      case "cycle":
-        comparison = a.cycleName.localeCompare(b.cycleName);
-        break;
-      case "status":
-        comparison = (a.passed ? 1 : 0) - (b.passed ? 1 : 0);
-        break;
-    }
-
-    return sortDirection.value === "asc" ? comparison : -comparison;
-  });
-
-  return subjects;
-});
-
-const handleSort = (column: string) => {
-  if (sortColumn.value === column) {
-
-    sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
-  } else {
-
-    sortColumn.value = column;
-    sortDirection.value = "asc";
-  }
-};
-
-const getSortIcon = (column: string) => {
-  if (sortColumn.value !== column) return null;
-
-  return sortDirection.value === "asc" ? "↑" : "↓";
-};
-
 const handleExportPDF = async () => {
   if (!student.value) return;
 
   isExporting.value = true;
   try {
-    await exportToPDF(student.value.student.carnet);
+    await generateStudentPDF(student.value, {
+      filename: `constancia_${student.value.student.carnet}.pdf`
+    });
   } catch (e) {
     console.error("Error exporting PDF:", e);
     error.value = "Error al exportar PDF";
@@ -283,75 +213,77 @@ const goBack = () => {
           </div>
         </div>
 
-        <!-- Grades table -->
-        <div v-if="student.student.cycles && student.student.cycles.length > 0"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Materias Cursadas</h2>
-            <p class="mt-1 text-sm text-gray-600">
-              Total de materias: {{ student.student.subjects_count }}
-            </p>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" @click="handleSort('name')"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                    Materia {{ getSortIcon('name') }}
-                  </th>
-                  <th scope="col" @click="handleSort('uv')"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                    UV {{ getSortIcon('uv') }}
-                  </th>
-                  <th scope="col" @click="handleSort('grade')"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                    Nota {{ getSortIcon('grade') }}
-                  </th>
-                  <th scope="col" @click="handleSort('cycle')"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                    Ciclo {{ getSortIcon('cycle') }}
-                  </th>
-                  <th scope="col" @click="handleSort('status')"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                    Estado {{ getSortIcon('status') }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="subject in sortedSubjects" :key="subject.id" class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ subject.name }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ subject.uv }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ subject.grade.toFixed(1) }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ subject.cycleName }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span :class="[
-                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                      subject.passed
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800',
-                    ]">
-                      {{ subject.passed ? "Aprobado" : "Reprobado" }}
-                    </span>
-                  </td>
-                </tr>
-                <tr v-if="sortedSubjects.length === 0">
-                  <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">
-                    No hay materias registradas
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+         <!-- Grades table -->
+         <div v-if="student.student.cycles && student.student.cycles.length > 0"
+           class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+           <div class="px-6 py-4 border-b border-gray-200">
+             <h2 class="text-lg font-semibold text-gray-900">Materias Cursadas</h2>
+             <p class="mt-1 text-sm text-gray-600">
+               Total de materias: {{ student.student.subjects_count }}
+             </p>
+           </div>
+           <div class="overflow-x-auto">
+             <table class="min-w-full divide-y divide-gray-200">
+               <thead class="bg-gray-50">
+                 <tr>
+                   <th scope="col"
+                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Materia
+                   </th>
+                   <th scope="col"
+                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     UV
+                   </th>
+                   <th scope="col"
+                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Nota
+                   </th>
+                   <th scope="col"
+                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Ciclo
+                   </th>
+                   <th scope="col"
+                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                     Estado
+                   </th>
+                 </tr>
+               </thead>
+               <tbody class="bg-white divide-y divide-gray-200">
+                 <template v-for="cycle in student.student.cycles" :key="cycle.id">
+                   <tr v-for="subject in cycle.subjects" :key="subject.id" class="hover:bg-gray-50 transition-colors">
+                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                       {{ subject.name }}
+                     </td>
+                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                       {{ subject.uv }}
+                     </td>
+                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                       {{ subject.grade.toFixed(1) }}
+                     </td>
+                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                       {{ cycle.name }}
+                     </td>
+                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                       <span :class="[
+                         'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                         subject.passed
+                           ? 'bg-green-100 text-green-800'
+                           : 'bg-red-100 text-red-800',
+                       ]">
+                         {{ subject.passed ? "Aprobado" : "Reprobado" }}
+                       </span>
+                     </td>
+                   </tr>
+                 </template>
+                 <tr v-if="!student.student.cycles || student.student.cycles.length === 0">
+                   <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">
+                     No hay materias registradas
+                   </td>
+                 </tr>
+               </tbody>
+             </table>
+           </div>
+         </div>
 
         <!-- No cycles message -->
         <div v-else class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">

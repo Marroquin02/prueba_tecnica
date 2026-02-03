@@ -52,28 +52,6 @@ export const useStudents = () => {
     }
 
 
-    const exportToPDF = async (carnet: string) => {
-        try {
-            const response = await $fetch<Blob>(`/students/${carnet}/report`, {
-                baseURL: config.public.apiBase as string | undefined,
-                method: 'GET',
-                responseType: 'blob'
-            })
-
-
-            const url = window.URL.createObjectURL(response)
-            const link = document.createElement('a')
-            link.href = url
-            link.download = `constancia_${carnet}.pdf`
-            link.click()
-            window.URL.revokeObjectURL(url)
-        } catch (e) {
-            console.error('Error exporting PDF:', e)
-            throw e
-        }
-    }
-
-
     const sendByEmail = async (carnet: string) => {
         try {
             await $fetch(`/students/${carnet}/email-report`, {
@@ -92,7 +70,6 @@ export const useStudents = () => {
         error,
         meta,
         fetchStudents,
-        exportToPDF,
         sendByEmail
     }
 }
