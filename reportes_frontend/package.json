@@ -12,6 +12,8 @@
   "dependencies": {
     "@nuxt/eslint": "1.13.0",
     "@nuxt/ui": "4.4.0",
+    "@vueuse/core": "^14.2.0",
+    "@vueuse/nuxt": "14.2.0",
     "eslint": "^9.39.2",
     "nuxt": "^4.3.0",
     "tailwindcss": "^4.1.18",

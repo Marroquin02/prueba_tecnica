@@ -30,6 +30,16 @@ class StudentService
 
         $students = $query->paginate($perPage, ['*'], 'page', $page);
 
-        return StudentResource::collection($students);
+        return [
+            'data' => StudentResource::collection($students),
+            'meta' => [
+                'current_page' => $students->currentPage(),
+                'last_page' => $students->lastPage(),
+                'per_page' => $students->perPage(),
+                'total' => $students->total(),
+                'from' => $students->firstItem(),
+                'to' => $students->lastItem(),
+            ],
+        ];
     }
 }
