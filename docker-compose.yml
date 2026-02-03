@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # Servicio de base de datos PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: reportes_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-reportes_db}
+      POSTGRES_USER: ${POSTGRES_USER:-reportes_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-reportes_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - reportes_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-reportes_user} -d ${POSTGRES_DB:-reportes_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servicio de la API Laravel
+  api:
+    build:
+      context: ./reportes_api
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: reportes_api
+    ports:
+      - "8000:80"
+    volumes:
+      - ./reportes_api:/var/www/html
+      - ./reportes_api/storage:/var/www/html/storage
+    environment:
+      # Configuración de la aplicación
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      
+      # Configuración de la base de datos PostgreSQL
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${POSTGRES_DB:-reportes_db}
+      DB_USERNAME: ${POSTGRES_USER:-reportes_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-reportes_password}
+      
+      # Configuración de caché y sesiones
+      CACHE_DRIVER: ${CACHE_DRIVER:-redis}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      
+      # Configuración de Redis
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+      REDIS_PORT: 6379
+      
+      # Configuración de correo SMTP
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@example.com}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Sistema de Reportes}
+    networks:
+      - reportes_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Servicio de Redis para caché y colas
+  redis:
+    image: redis:7-alpine
+    container_name: reportes_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - reportes_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servicio del Frontend Nuxt.js
+  frontend:
+    build:
+      context: ./reportes_frontend
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-development}
+    container_name: reportes_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./reportes_frontend:/app
+      - /app/node_modules
+      - /app/.nuxt
+    environment:
+      # Configuración de Nuxt
+      NUXT_HOST: 0.0.0.0
+      NUXT_PORT: 3000
+      NODE_ENV: ${NODE_ENV:-development}
+      
+      # URL de la API
+      NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-http://api:80}
+    networks:
+      - reportes_network
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  reportes_network:
+    driver: bridge

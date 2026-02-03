@@ -1,0 +1,64 @@
+# Dependencias
+/vendor
+/node_modules
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+/storage/logs/*.log
+/storage/logs/laravel.log
+*.log
+
+# Cache
+/bootstrap/cache/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/framework/testing/*
+
+# Archivos de compilación
+/public/hot
+/public/storage
+
+# Archivos de IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de prueba
+/tests
+/phpunit.xml
+.phpunit.result.cache
+
+# Archivos de documentación
+README.md
+CHANGELOG.md
+LICENSE
+
+# Archivos de Git
+.git
+.gitignore
+.gitattributes
+
+# Archivos de Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Archivos de CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Archivos temporales
+*.tmp
+*.temp
