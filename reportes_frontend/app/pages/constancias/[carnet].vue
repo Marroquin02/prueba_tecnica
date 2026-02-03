@@ -13,7 +13,7 @@ const isExporting = ref(false);
 const isSendingEmail = ref(false);
 
 const { sendByEmail } = useStudents();
-const { generateStudentPDF, isGenerating: isPDFGenerating } = usePDF();
+const { generateStudentPDF, generateStudentPDFAsBase64, isGenerating: isPDFGenerating } = usePDF();
 
 onMounted(async () => {
   await fetchStudentDetail();
@@ -65,7 +65,13 @@ const handleSendEmail = async () => {
 
   isSendingEmail.value = true;
   try {
-    await sendByEmail(student.value.student.carnet);
+    // Generar PDF como base64
+    const { base64, filename } = await generateStudentPDFAsBase64(student.value, {
+      filename: `constancia_${student.value.student.carnet}.pdf`
+    });
+
+    // Enviar PDF a la API
+    await sendByEmail(student.value.student.carnet, base64, filename);
     alert("Constancia enviada por correo exitosamente");
   } catch (e) {
     console.error("Error sending email:", e);
@@ -81,7 +87,7 @@ const goBack = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
+  <div class="min-h-screen bg-gray-50 py-8 text-gray-600">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header con botón de regresar -->
       <div class="mb-6">

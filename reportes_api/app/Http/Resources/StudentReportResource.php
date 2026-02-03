@@ -61,6 +61,7 @@ class StudentReportResource extends JsonResource
 
         return [
             'carnet' => $this->carnet,
+            'email' => $this->email,
             'full_name' => $this->full_name,
             'career' => $this->career->name,
             'faculty' => $this->career->faculty->name,

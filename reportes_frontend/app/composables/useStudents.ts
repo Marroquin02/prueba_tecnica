@@ -52,11 +52,15 @@ export const useStudents = () => {
     }
 
 
-    const sendByEmail = async (carnet: string) => {
+    const sendByEmail = async (carnet: string, pdfBase64: string, filename: string) => {
         try {
             await $fetch(`/students/${carnet}/email-report`, {
                 baseURL: config.public.apiBase as string | undefined,
-                method: 'POST'
+                method: 'POST',
+                body: {
+                    pdf_base64: pdfBase64,
+                    filename: filename
+                }
             })
         } catch (e) {
             console.error('Error sending email:', e)

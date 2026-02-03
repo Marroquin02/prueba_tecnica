@@ -155,6 +155,32 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        echo "Agregando estudiante específico: Carlos Marroquin...\n";
+        $informaticaCareer = null;
+        foreach ($careers as $career) {
+            if ($career->name === 'Ingeniería Informática') {
+                $informaticaCareer = $career;
+                break;
+            }
+        }
+
+        if ($informaticaCareer) {
+            $carlosMarroquin = Students::create([
+                'carnet' => '00025221',
+                'email' => '00025221@uca.edu.sv',
+                'first_name' => 'Carlos',
+                'last_name' => 'Marroquin',
+                'career_id' => $informaticaCareer->id,
+                'ingress' => 2021,
+                'status' => 'activo'
+            ]);
+            $students[] = $carlosMarroquin;
+            $usedCarnets[] = '00025221';
+            echo "   ✅ Carlos Marroquin agregado con carnet 00025221\n";
+        } else {
+            echo "   ❌ No se encontró la carrera Ingeniería Informática\n";
+        }
+
         echo "Creando calificaciones...\n";
         $gradeCount = 0;
         $grades = [5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0];

@@ -9,3 +9,4 @@ Route::get('/', function () {
 
 Route::get('/students/minimal', [StudentsController::class, 'minimal']);
 Route::get('/students/{carnet}/report', [StudentsController::class, 'report']);
+Route::post('/students/{carnet}/email-report', [StudentsController::class, 'emailReport']);
