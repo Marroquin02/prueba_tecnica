@@ -3,6 +3,14 @@
 # ============================================
 FROM node:20-alpine AS builder
 
+# Argumentos de build
+ARG NODE_ENV=development
+ARG NUXT_PUBLIC_API_URL=http://api:80
+
+# Variables de entorno
+ENV NODE_ENV=${NODE_ENV}
+ENV NUXT_PUBLIC_API_URL=${NUXT_PUBLIC_API_URL}
+
 # Establecer directorio de trabajo
 WORKDIR /app
 
@@ -29,6 +37,18 @@ RUN pnpm run build
 # ============================================
 FROM node:20-alpine AS development
 
+# Argumentos de build
+ARG NODE_ENV=development
+ARG NUXT_PUBLIC_API_URL=http://api:80
+ARG NUXT_HOST=0.0.0.0
+ARG NUXT_PORT=3000
+
+# Variables de entorno
+ENV NODE_ENV=${NODE_ENV}
+ENV NUXT_PUBLIC_API_URL=${NUXT_PUBLIC_API_URL}
+ENV NUXT_HOST=${NUXT_HOST}
+ENV NUXT_PORT=${NUXT_PORT}
+
 # Establecer directorio de trabajo
 WORKDIR /app
 
@@ -48,7 +68,7 @@ COPY . .
 RUN pnpm run postinstall
 
 # Exponer puerto 3000
-EXPOSE 3000
+EXPOSE ${NUXT_PORT}
 
 # Comando de inicio para desarrollo
 CMD ["pnpm", "dev", "--host", "0.0.0.0"]
@@ -57,6 +77,18 @@ CMD ["pnpm", "dev", "--host", "0.0.0.0"]
 # Stage 3: Production - Para entorno de producción
 # ============================================
 FROM node:20-alpine AS production
+
+# Argumentos de build
+ARG NODE_ENV=production
+ARG NUXT_PUBLIC_API_URL=http://api:80
+ARG NUXT_HOST=0.0.0.0
+ARG NUXT_PORT=3000
+
+# Variables de entorno
+ENV NODE_ENV=${NODE_ENV}
+ENV NUXT_PUBLIC_API_URL=${NUXT_PUBLIC_API_URL}
+ENV NUXT_HOST=${NUXT_HOST}
+ENV NUXT_PORT=${NUXT_PORT}
 
 # Establecer directorio de trabajo
 WORKDIR /app
@@ -86,12 +118,7 @@ RUN addgroup -g 1001 -S nodejs && \
 USER nodejs
 
 # Exponer puerto 3000
-EXPOSE 3000
-
-# Variables de entorno para producción
-ENV NUXT_HOST=0.0.0.0
-ENV NUXT_PORT=3000
-ENV NODE_ENV=production
+EXPOSE ${NUXT_PORT}
 
 # Comando de inicio para producción
 CMD ["node", ".output/server/index.mjs"]

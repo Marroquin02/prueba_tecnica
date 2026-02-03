@@ -28,6 +28,30 @@ services:
       context: ./reportes_api
       dockerfile: Dockerfile
       target: ${BUILD_TARGET:-development}
+      args:
+        APP_ENV: ${APP_ENV:-local}
+        APP_DEBUG: ${APP_DEBUG:-true}
+        APP_URL: ${APP_URL:-http://localhost:8000}
+        DB_CONNECTION: pgsql
+        DB_HOST: postgres
+        DB_PORT: 5432
+        DB_DATABASE: ${POSTGRES_DB:-reportes_db}
+        DB_USERNAME: ${POSTGRES_USER:-reportes_user}
+        DB_PASSWORD: ${POSTGRES_PASSWORD:-reportes_password}
+        CACHE_DRIVER: ${CACHE_DRIVER:-redis}
+        SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+        QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+        REDIS_HOST: redis
+        REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+        REDIS_PORT: 6379
+        MAIL_MAILER: ${MAIL_MAILER:-smtp}
+        MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+        MAIL_PORT: ${MAIL_PORT:-587}
+        MAIL_USERNAME: ${MAIL_USERNAME:-}
+        MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+        MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+        MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@example.com}
+        MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Sistema de Reportes}
     container_name: reportes_api
     ports:
       - "8000:80"
@@ -99,6 +123,11 @@ services:
       context: ./reportes_frontend
       dockerfile: Dockerfile
       target: ${BUILD_TARGET:-development}
+      args:
+        NODE_ENV: ${NODE_ENV:-development}
+        NUXT_PUBLIC_API_URL: ${NUXT_PUBLIC_API_URL:-http://api:80}
+        NUXT_HOST: 0.0.0.0
+        NUXT_PORT: 3000
     container_name: reportes_frontend
     ports:
       - "3000:3000"
