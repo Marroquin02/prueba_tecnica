@@ -1,11 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StudentsController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-
-Route::post('/login', [LoginController::class, 'login'])->middleware('web');
-Route::post('/logout', [LoginController::class, 'logout'])->middleware('web');
+Route::get('/students/minimal', [StudentsController::class, 'minimal']);
