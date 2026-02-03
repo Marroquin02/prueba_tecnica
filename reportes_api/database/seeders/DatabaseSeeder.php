@@ -22,37 +22,51 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Crear Facultades
+
         echo "Creando facultades...\n";
         $faculties = [
-            Faculties::create(['name' => 'Ingeniería y Arquitectura']),
-            Faculties::create(['name' => 'Ciencias Económicas']),
-            Faculties::create(['name' => 'Ciencias y Humanidades'])
+            Faculties::create(['name' => 'Ingenierías y Arquitectura']),
+            Faculties::create(['name' => 'Ciencias Economicas y Empresariales']),
+            Faculties::create(['name' => 'Ciencias Sociales y Humanidades'])
         ];
 
-        // Crear Carreras
+
         echo "Creando carreras...\n";
         $careers = [];
         $careersByFaculty = [
             $faculties[0]->id => [
+                'Arquitectura',
                 'Ingeniería Civil',
                 'Ingeniería Eléctrica',
                 'Ingeniería Mecánica',
                 'Ingeniería Industrial',
-                'Ingeniería de Sistemas',
-                'Arquitectura'
+                'Ingeniería Informática',
+                'Ingeniería Química',
+                'Ingeniería Energética',
+                'Ingeniería de Alimentos'
             ],
             $faculties[1]->id => [
-                'Licenciatura en Contaduría Pública',
                 'Licenciatura en Administración de Empresas',
+                'Licenciatura en Contaduría Pública',
                 'Licenciatura en Economía',
-                'Licenciatura en Mercadeo Internacional'
+                'Licenciatura en Finanzas',
+                'Técnico en Contaduría',
+                'Licenciatura en Comunicación Social',
+                'Licenciatura en Mercadeo',
+                'Técnico en Marketing Digital',
+                'Técnico en Producción Multimedia'
             ],
             $faculties[2]->id => [
-                'Licenciatura en Letras',
+                'Licenciatura en Ciencias Sociales',
+                'Licenciatura en Filosofía',
                 'Licenciatura en Idioma Inglés',
                 'Licenciatura en Psicología',
-                'Licenciatura en Periodismo'
+                'Licenciatura en Teología',
+                'Licenciatura en Ciencias Jurídicas',
+                'Profesorado en Teología',
+                'Profesorado en Idioma Inglés para Tercer Ciclo de Educación Básica y Educación Media',
+                'Profesorado en Educación Básica para Primero y Segundo Ciclos',
+                'Licenciatura en Educación Básica para Primero y Segundo Ciclos'
             ]
         ];
         foreach ($careersByFaculty as $facultyId => $careerNames) {
@@ -65,12 +79,12 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // Crear Materias
+
         echo "Creando materias...\n";
         $materials = Materials::factory()->count(40)->create();
 
 
-        // Crear Ciclos Académicos
+
         echo "Creando ciclos académicos...\n";
         $cycles = [];
         foreach ([2021, 2022, 2023, 2024, 2025] as $year) {
@@ -79,14 +93,14 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // Crear Estudiantes
+
         echo "Creando estudiantes...\n";
         $students = [];
         $usedCarnets = [];
 
         foreach (range(1, 100) as $i) {
             do {
-                $year = fake()->numberBetween(18, 26);
+                $year = fake()->numberBetween(21, 26);
                 $solicitud = fake()->numberBetween(1, 2000);
                 $carnet = sprintf('%06d%02d', $solicitud, $year);
             } while (in_array($carnet, $usedCarnets));
@@ -140,30 +154,64 @@ class DatabaseSeeder extends Seeder
                 'status' => fake()->randomElement(['activo', 'activo', 'activo', 'activo', 'inactivo'])
             ]);
         }
-        // Crear Calificaciones
+
         echo "Creando calificaciones...\n";
         $gradeCount = 0;
         $grades = [5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0];
+        $currentYear = 2026;
 
         foreach ($students as $student) {
-            $numGrades = fake()->numberBetween(5, 15);
-            $usedCombinations = [];
+            $yearsSinceIngress = $currentYear - $student->ingress;
+            $maxGradesByYear = 0;
+
+            for ($y = 0; $y < $yearsSinceIngress; $y++) {
+                $maxGradesByYear += 9;
+            }
+
+            $careerMaterials = $student->career->materials;
+            $minGrades = (int) ceil($careerMaterials / 2);
+
+            $maxGrades = min($maxGradesByYear, $careerMaterials);
+
+            $minGrades = min($minGrades, $maxGrades);
+
+            $numGrades = fake()->numberBetween($minGrades, $maxGrades);
+
+
+            $passedMaterials = [];
+
+            $failedMaterials = [];
 
             for ($i = 0; $i < $numGrades; $i++) {
-                do {
-                    $materialId = fake()->randomElement($materials)->id;
-                    $cycleId = fake()->randomElement($cycles)->id;
-                    $combination = "{$materialId}-{$cycleId}";
-                } while (in_array($combination, $usedCombinations));
 
-                $usedCombinations[] = $combination;
+                $availableMaterials = $materials->reject(function ($material) use ($passedMaterials) {
+                    return in_array($material->id, $passedMaterials);
+                });
+
+                if ($availableMaterials->isEmpty()) {
+                    break;
+                }
+
+                $material = $availableMaterials->random();
+                $materialId = $material->id;
+                $cycleId = fake()->randomElement($cycles)->id;
+                $grade = fake()->randomElement($grades);
 
                 Grades::create([
                     'material_id' => $materialId,
                     'student_id' => $student->carnet,
                     'cycle_id' => $cycleId,
-                    'grade' => fake()->randomElement($grades)
+                    'grade' => $grade
                 ]);
+
+
+                if ($grade >= 6) {
+                    $passedMaterials[] = $materialId;
+                } else {
+
+                    $failedMaterials[] = $materialId;
+                }
+
                 $gradeCount++;
             }
         }

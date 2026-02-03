@@ -24,4 +24,10 @@ class StudentsController extends Controller
         );
         return response()->json($students);
     }
+
+    public function report($carnet)
+    {
+        $report = $this->studentService->generateStudentReport($carnet);
+        return response()->json($report);
+    }
 }

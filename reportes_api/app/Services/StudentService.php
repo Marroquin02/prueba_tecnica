@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\StudentReportResource;
 use App\Http\Resources\StudentResource;
 use App\Models\Students;
 
@@ -40,6 +41,23 @@ class StudentService
                 'from' => $students->firstItem(),
                 'to' => $students->lastItem(),
             ],
+        ];
+    }
+
+    public function generateStudentReport(string $carnet): array
+    {
+        $student = Students::with(['career.faculty', 'grades.material'])->where('carnet', $carnet)->firstOrFail();
+
+        $totalGrades = $student->grades->count();
+        // 'materials' is an integer field in the careers table, not a relationship
+        $totalMaterials = $student->career->materials ?? 0;
+        $passedMaterials = $student->grades->where('grade', '>=', 6)->count();
+        $progress = $totalMaterials > 0 ? round(($passedMaterials / $totalMaterials) * 100, 2) : 0;
+
+        return [
+            'student' => new StudentReportResource($student),
+            'total_grades' => $totalGrades,
+            'progress' => $progress,
         ];
     }
 }

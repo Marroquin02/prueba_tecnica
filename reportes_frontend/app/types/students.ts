@@ -1,3 +1,29 @@
+export interface Subject {
+    id: string
+    name: string
+    uv: number
+    grade: number
+    passed: boolean
+}
+
+export interface Cycle {
+    id: string
+    name: string
+    subjects: Subject[]
+}
+
+export interface Grade {
+    id: number
+    grade: number
+    cycle: string
+    material: {
+        id: number
+        name: string
+        code: string
+        uv: number
+    }
+}
+
 export interface Student {
     carnet: string
     full_name: string
@@ -5,8 +31,19 @@ export interface Student {
     career: string
     faculty: string
     subjects_count: number
+    passed_subjects_count?: number
+    total_career_materials?: number
     email?: string
     status?: 'activo' | 'inactivo'
+    grades?: Grade[]
+    progress?: number
+    cycles?: Cycle[]
+}
+
+export interface StudentDetail {
+    student: Student
+    total_grades: number
+    progress: number
 }
 
 export interface PaginationMeta {

@@ -8,9 +8,7 @@ const {
   isLoading,
   error,
   meta,
-  fetchStudents,
-  exportToPDF,
-  sendByEmail,
+  fetchStudents
 } = useStudents();
 
 console.log("Students data in constancias.vue:", students.value);
@@ -20,7 +18,8 @@ const currentPage = ref(1);
 const perPage = ref(15);
 
 onMounted(async () => {
-  await fetchStudents({ page: 1, perPage: 15 });
+  console.log('onMounted: fetching students with page=1, perPage=15, searchTerm=""');
+  await fetchStudents({ page: 1, perPage: 15, searchTerm: '' });
 });
 
 const debouncedSearch = useDebounceFn(async () => {
@@ -28,7 +27,7 @@ const debouncedSearch = useDebounceFn(async () => {
   await fetchStudents({
     page: 1,
     perPage: perPage.value,
-    searchTerm: searchTerm.value,
+    searchTerm: searchTerm.value || '',
   });
 }, 500);
 
@@ -39,7 +38,7 @@ const handlePageChange = async (page: number) => {
   await fetchStudents({
     page,
     perPage: perPage.value,
-    searchTerm: searchTerm.value,
+    searchTerm: searchTerm.value || '',
   });
 };
 
@@ -48,7 +47,7 @@ const handlePerPageChange = async () => {
   await fetchStudents({
     page: 1,
     perPage: perPage.value,
-    searchTerm: searchTerm.value,
+    searchTerm: searchTerm.value || '',
   });
 };
 
@@ -76,12 +75,9 @@ const handleRowClick = (carnet: string) => {
 
         <div class="flex items-center gap-2">
           <label for="perPage" class="text-sm font-medium text-gray-700">Mostrar:</label>
-          <select
-            id="perPage"
-            v-model="perPage"
+          <select id="perPage" v-model="perPage"
             class="rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            @change="handlePerPageChange"
-          >
+            @change="handlePerPageChange">
             <option :value="10">10</option>
             <option :value="15">15</option>
             <option :value="25">25</option>
@@ -90,12 +86,7 @@ const handleRowClick = (carnet: string) => {
         </div>
       </div>
 
-      <StudentsTable
-        :students="students"
-        :is-loading="isLoading"
-        :meta="meta"
-        @row-click="handleRowClick"
-      />
+      <StudentsTable :students="students" :is-loading="isLoading" :meta="meta" @row-click="handleRowClick" />
 
       <!-- Control de paginación fuera de la tabla -->
       <div v-if="!isLoading && students.length > 0" class="mt-6">

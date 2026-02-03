@@ -18,9 +18,9 @@ class FacultiesFactory extends Factory
     {
         return [
             'name' => fake()->randomElement([
-                'Ingeniería y Arquitectura',
-                'Ciencias Económicas',
-                'Ciencias y Humanidades'
+                'Ingenierías y Arquitectura',
+                'Ciencias Economicas y Empresariales',
+                'Ciencias Sociales y Humanidades',
             ])
         ];
     }
